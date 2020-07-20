@@ -1,10 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqlite_app/employee.dart';
 import 'package:path/path.dart';
 import 'dart:io' as io;
 
-class DBHelper {
+class DBHelper with ChangeNotifier {
   static Database _db;
   static const String ID = 'id';
   static const String NAME = 'name';
@@ -30,17 +31,17 @@ class DBHelper {
         .execute("CREATE TABLE $TABLE ($ID INTEGER PRIMARY KEY, $NAME TEXT)");
   }
 
-  Future<Employee> save(Employee employee) async {
+  void save(Employee employee) async {
     var dbClient = await db;
     employee.id = await dbClient.insert(TABLE, employee.toMap());
-    return employee;
+    notifyListeners();
 
 //    await dbClient.transaction((txn) async {
 //      return txn.rawInsert("INSERT INTO $TABLE($NAME) VALUES(?),[employee.name]");
 //    });
   }
 
-  Future<List<Employee>> getEmployees() async {
+  Future<List<Employee>> get getEmployees async {
     var dbClient = await db;
     List<Map> maps = await dbClient.query(TABLE, columns: [ID, NAME]);
     // List<Map> maps = await dbClient.rawQuery("SELECT * FROM $TABLE");
@@ -53,15 +54,17 @@ class DBHelper {
     return employees;
   }
 
-  Future<int> delete(int id) async {
+  void delete(int id) async {
     var dbClient = await db;
-    return await dbClient.delete(TABLE, where: '$ID = ?', whereArgs: [id]);
+    await dbClient.delete(TABLE, where: '$ID = ?', whereArgs: [id]);
+    notifyListeners();
   }
 
-  Future<int> update(Employee employee) async {
+  void update(Employee employee) async {
     var dbClient = await db;
-    return await dbClient.update(TABLE, employee.toMap(),
+    await dbClient.update(TABLE, employee.toMap(),
         where: '$ID = ?', whereArgs: [employee.id]);
+    notifyListeners();
   }
 
   Future close() async {

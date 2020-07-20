@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sqlite_app/employee.dart';
 import 'package:sqlite_app/db_helper.dart';
 
@@ -9,26 +10,17 @@ class DBPage extends StatefulWidget {
 }
 
 class _DBPageState extends State<DBPage> {
-  Future<List<Employee>> employees;
   TextEditingController controller = new TextEditingController();
   String name;
   int curUserId;
   final formKey = new GlobalKey<FormState>();
-  var dbHelper;
+  DBHelper dbHelper;
   bool isUpdating;
 
   @override
   void initState() {
     super.initState();
-    dbHelper = DBHelper();
     isUpdating = false;
-    refreshList();
-  }
-
-  refreshList() {
-    setState(() {
-      employees = dbHelper.getEmployees();
-    });
   }
 
   clearName() {
@@ -49,7 +41,6 @@ class _DBPageState extends State<DBPage> {
         dbHelper.save(e);
       }
       clearName();
-      refreshList();
     }
   }
 
@@ -126,7 +117,6 @@ class _DBPageState extends State<DBPage> {
                       icon: Icon(Icons.delete),
                       onPressed: () {
                         dbHelper.delete(e.id);
-                        refreshList();
                       },
                     ),
                   ),
@@ -141,7 +131,7 @@ class _DBPageState extends State<DBPage> {
   list() {
     return Expanded(
       child: FutureBuilder(
-        future: employees,
+        future: dbHelper.getEmployees,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return dataTable(snapshot.data);
@@ -157,6 +147,7 @@ class _DBPageState extends State<DBPage> {
 
   @override
   Widget build(BuildContext context) {
+    dbHelper = Provider.of<DBHelper>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('DB Example'),
